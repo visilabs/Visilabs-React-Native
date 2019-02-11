@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/visilabs/Visilabs-React-Native/issues"
   },
-  "homepage": "https://github.com/visilabs/Visilabs-React-Native#readme"
+  "homepage": "https://github.com/visilabs/Visilabs-React-Native#readme",
+  "dependencies": {
+    "querystring": "^6.2.0"
+  }
 }
