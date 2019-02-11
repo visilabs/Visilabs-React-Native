@@ -11,5 +11,13 @@
     "relateddigital"
   ],
   "author": "visilabs",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visilabs/Visilabs-React-Native.git"
+  },
+  "bugs": {
+    "url": "https://github.com/visilabs/Visilabs-React-Native/issues"
+  },
+  "homepage": "https://github.com/visilabs/Visilabs-React-Native#readme"
 }
