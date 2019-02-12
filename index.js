@@ -52,9 +52,6 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 
 		if(data) { options["data"] = JSON.stringify(data); }
 
-
-		console.log(options);
-
 		fetch(url, options)
 			.then(d => { callback();})
 			.catch(err => {
