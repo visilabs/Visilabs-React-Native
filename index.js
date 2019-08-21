@@ -1,5 +1,5 @@
 import { AsyncStorage, Platform } from "react-native"
-import { Constants } require('expo-constants');
+var Constants  = require('expo-constants');
 var querystring     = require('querystring');
 
 function checkStatus(response) {
