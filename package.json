@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/visilabs/Visilabs-React-Native#readme",
   "dependencies": {
-    "querystring": "^0.2.0"
+    "querystring": "^0.2.0",
+	"expo-constants": ">=6.0.0"
   }
 }
