@@ -1,6 +1,6 @@
 import { AsyncStorage, Platform } from "react-native"
-var Constants  = require('expo-constants');
-var querystring     = require('querystring');
+import { Constants } from 'expo-constants'
+var querystring = require('querystring');
 
 function checkStatus(response) {
 	if (response.status >= 200 && response.status < 300) {
