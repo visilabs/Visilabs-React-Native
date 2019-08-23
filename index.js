@@ -49,8 +49,14 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 	var send = function(url, method, data, callback){
 		var options = {};
 		options["method"] = method == null ? "GET" : method;
+		
+		if(method === "POST"){
+			options["headers"] = { "Content-Type" : "application/json", "Cache-Control" : "no-cache"}
+		}
 
-		if(data) { options["data"] = JSON.stringify(data); }
+		if(data) { 
+			options["body"] = JSON.stringify(data); 
+		}
 
 		fetch(url, options)
 			.then(d => { callback();})
@@ -144,6 +150,30 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 
 
 	api.euromsg = {
+		
+		setUser : function(user){
+			
+			if(user === undefined)
+				return;
+			
+			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
+				var subscription = JSON.parse(subscriptionString);
+				if(!subscription){
+					subscription = {};
+				}
+				if(!subscription["extra"]){
+					subscription["extra"] = {};
+				}
+				
+				if(user["keyID"] !== undefined)
+					subscription["extra"]["keyID"] = user["keyID"];
+					
+				if(user["email"] !== undefined)
+					subscription["extra"]["email"] = user["email"];
+					
+				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
+			});
+		},
 
 		subscribe: function(token) {
 			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
@@ -151,11 +181,16 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 				if(!subscription){
 					subscription = {};
 				}
+				if(Constants.platform.ios !== undefined){
+					subscription["osVersion"] = Constants.platform.ios.systemVersion === undefined ? "" : Constants.platform.ios.systemVersion;
+				}
+				else if(Constants.platform.android !== undefined){
+					subscription["osVersion"] = Constants.platform.android.systemVersion === undefined ? "" : Constants.platform.android.systemVersion;
+				}
 				subscription["token"] = token;
 				subscription["appVersion"] = isEmptyOrSpaces(subscription["appVersion"]) ? Constants.manifest.version : subscription["appVersion"];
 				subscription["appKey"] = api.euroMsgApplicationKey;
 				subscription["os"] = Platform.OS;
-				subscription["osVersion"] = Constants.systemVersion;
 				subscription["deviceType"] = Constants.deviceName;
 				subscription["deviceName"] = Constants.deviceName;
 				subscription["carrier"] = "";  //TODO: 
@@ -206,118 +241,6 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 			});
 		},
 
-		setAppVersion : function(appVersion){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				subscription["appVersion"] = appVersion;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setTwitterId : function(twitterId){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"]["twitterId"] = twitterId;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setEmail : function(email){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"]["email"] = email;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setFacebook : function(facebookId){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"]["facebook"] = facebookId;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setLocation : function(latitude, longitude){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				var location = {};
-				location["latitude"] = latitude;
-				location["longitude"] = longitude;
-				subscription["extra"]["location"] = location;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setEuroUserId : function(userKey){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"]["keyID"] = userKey;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setPhoneNumber : function(msisdn){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"]["msisdn"] = msisdn;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
-		setUserProperty : function(key, value){
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				if(!subscription){
-					subscription = {};
-				}
-				if(!subscription["extra"]){
-					subscription["extra"] = {};
-				}
-				subscription["extra"][key] = value;
-				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
-			});
-		},
-
 		removeUserProperties : function(){
 			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
 				var subscription = JSON.parse(subscriptionString);
@@ -339,4 +262,3 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 module.exports = {
 	create_api: create_api
 };
-
