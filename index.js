@@ -200,6 +200,9 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 				subscription["sdkVersion"] = sdkVersion;
 				subscription["firstTime"] = 1;
 				subscription["identifierForVendor"] = Constants.deviceId;
+				if(subscription["extra"] === undefined)
+					subscription["extra"] = {};
+					
 				send(api.euroMsgSubscriptionURL, "POST", subscription, function() {});
 			});
 
