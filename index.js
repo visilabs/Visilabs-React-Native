@@ -204,6 +204,7 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 					subscription["extra"] = {};
 					
 				send(api.euroMsgSubscriptionURL, "POST", subscription, function() {});
+				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
 			});
 
 		},
