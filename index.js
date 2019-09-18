@@ -208,24 +208,6 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 
 		},
 
-		reportReceived : function(pushId){
-			if(!pushId) new Error("PushId missing!");
-
-			AsyncStorage.getItem(euroSubscriptionKey).then(subscriptionString => {
-				var subscription = JSON.parse(subscriptionString);
-				var retention = {};
-				retention["key"] = api.euroMsgApplicationKey;
-				retention["pushId"] = pushId;
-				retention["status"] = "D";
-				var subscription = JSON.parse(subscriptionString);
-				if(subscription){
-					retention["token"] = subscription["token"];
-				}
-
-				send(api.euroMsgRetentionURL, "POST", retention, function() {});
-			});
-		},
-
 		reportRead : function(pushId){
 			if(!pushId) new Error("PushId missing!");
 
