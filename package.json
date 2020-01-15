@@ -1,6 +1,6 @@
 {
   "name": "@relateddigital/visilabs-react-native",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "visilabs react native sdk",
   "main": "index.js",
   "scripts": {
