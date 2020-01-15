@@ -14,7 +14,7 @@ function checkStatus(response) {
 
 var create_api = function(organizationID, siteID, segmentURL, dataSource, realTimeURL, channel, euroMsgApplicationKey, euroMsgSubscriptionURL, euroMsgRetentionURL, local) {
 
-	const sdkVersion = "1.0";
+	const sdkVersion = "1.0.17";
 	const euroSubscriptionKey = "subscription";
 
 	var api = {};
@@ -171,6 +171,13 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 				if(user["email"] !== undefined)
 					subscription["extra"]["email"] = user["email"];
 					
+				if(subscription["extra"]['pushPermit'] === undefined && user["pushPermit"] === undefined)
+					subscription["extra"]['pushPermit'] = 'Y';
+				if(subscription["extra"]['gsmPermit'] === undefined && user["gsmPermit"] === undefined)
+					subscription["extra"]['gsmPermit'] = 'Y';
+				if(subscription["extra"]['emailPermit'] === undefined && user["emailPermit"] === undefined)
+					subscription["extra"]['emailPermit'] = 'Y';	
+
 				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
 			});
 		},
@@ -202,6 +209,17 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 				subscription["identifierForVendor"] = Constants.deviceId;
 				if(subscription["extra"] === undefined)
 					subscription["extra"] = {};
+					
+				
+				
+				if(subscription["extra"]['pushPermit'] === undefined)
+					subscription["extra"]['pushPermit'] = 'Y';
+				if(subscription["extra"]['gsmPermit'] === undefined)
+                	subscription["extra"]['gsmPermit'] = 'Y';
+                if(subscription["extra"]['gsmPermit'] === undefined)	
+                	subscription["extra"]['gsmPermit'] = 'Y';
+					
+				
 					
 				send(api.euroMsgSubscriptionURL, "POST", subscription, function() {});
 				AsyncStorage.setItem(euroSubscriptionKey, JSON.stringify(subscription));
@@ -248,3 +266,8 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 module.exports = {
 	create_api: create_api
 };
+
+
+
+
+
