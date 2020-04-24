@@ -14,7 +14,7 @@ function checkStatus(response) {
 
 var create_api = function(organizationID, siteID, segmentURL, dataSource, realTimeURL, channel, euroMsgApplicationKey, euroMsgSubscriptionURL, euroMsgRetentionURL, local) {
 
-	const sdkVersion = "1.0.22";
+	const sdkVersion = "1.0.24";
 	const euroSubscriptionKey = "subscription";
 
 	var api = {};
@@ -76,7 +76,7 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 
 	api.sendRequest = function(data, callback) {
 		callback = callback || function() {};
-
+		data["OM.vchannel"] = api.channel;
 		var valuesToSet = [];
 
 		for(var i = 0; i < keysToBeStored.length; i++){
