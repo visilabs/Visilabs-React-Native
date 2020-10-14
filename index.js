@@ -159,6 +159,7 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 		AsyncStorage.multiGet(["OM.exVisitorID", "OM.cookieID"]).then(idArr => {
 
 			api.customEvent("ClearIDs", {
+				"OM.ClearIDs":"1",
 				"OM.exVisitorID": idArr[0][1],
 				"OM.cookieID": idArr[1][1]
 			}, function () {
