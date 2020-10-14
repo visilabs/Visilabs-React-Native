@@ -1,4 +1,5 @@
-import { AsyncStorage, Platform } from "react-native"
+import { Platform } from "react-native"
+import AsyncStorage from '@react-native-community/async-storage'
 import Constants from 'expo-constants'
 var querystring = require('querystring');
 
@@ -14,8 +15,10 @@ function checkStatus(response) {
 
 var create_api = function(organizationID, siteID, segmentURL, dataSource, realTimeURL, channel, euroMsgApplicationKey, euroMsgSubscriptionURL, euroMsgRetentionURL, local) {
 
-	const sdkVersion = "1.0.24";
+	const sdkVersion = "1.0.25";
 	const euroSubscriptionKey = "subscription";
+
+	let runController = 0;
 
 	var api = {};
 	var keysToBeStored = ["OM.cookieID", "OM.exVisitorID", "OM.sys.AppID", "OM.sys.TokenID", "OM.channel", "OM.vchannel"];
@@ -146,6 +149,32 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 		properties["OM.b_sgnp"] = "SignUp";
 		api.customEvent("SignUpPage", properties, callback);
 	};
+
+
+	api.getExVisitorIDasync = async function () {
+		return await AsyncStorage.getItem('OM.exVisitorID');
+	};
+
+	api.clearIDs = function () {
+		AsyncStorage.multiGet(["OM.exVisitorID", "OM.cookieID"]).then(idArr => {
+
+			api.customEvent("ClearIDs", {
+				"OM.exVisitorID": idArr[0][1],
+				"OM.cookieID": idArr[1][1]
+			}, function () {
+				if (runController % 2 == 0) {
+					runController++;
+					AsyncStorage.removeItem("OM.exVisitorID"),
+					AsyncStorage.removeItem("OM.cookieID").then(res => setCookieID())
+				}
+			})
+
+		})
+	}
+
+	api.getIDsAsync = async function () {
+		return await AsyncStorage.multiGet(["OM.exVisitorID", "OM.cookieID"])
+	}
 
 
 	api.euromsg = {
