@@ -1,6 +1,6 @@
 {
   "name": "@relateddigital/visilabs-react-native",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "visilabs react native sdk",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,6 @@
   "dependencies": {
     "querystring": "^0.2.0",
     "expo-constants": "^8.0.0",
-    "@react-native-community/async-storage":"1.12.1"
+    "@react-native-community/async-storage": "1.12.1"
   }
 }
