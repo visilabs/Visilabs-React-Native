@@ -1,5 +1,5 @@
 import { Platform } from "react-native"
-import AsyncStorage from '@react-native-community/async-storage'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import Constants from 'expo-constants'
 var querystring = require('querystring');
 
@@ -15,13 +15,15 @@ function checkStatus(response) {
 
 var create_api = function(organizationID, siteID, segmentURL, dataSource, realTimeURL, channel, euroMsgApplicationKey, euroMsgSubscriptionURL, euroMsgRetentionURL, local) {
 
-	const sdkVersion = "1.0.28";
+	const sdkVersion = "1.0.29";
 	const euroSubscriptionKey = "subscription";
+	const suggestActionsKey = 'suggestActionsParams';
 
-	let runController = 0;
+	let runController = 0, _VTObjsID = 0;
 
 	var api = {};
 	var keysToBeStored = ["OM.cookieID", "OM.exVisitorID", "OM.sys.AppID", "OM.sys.TokenID", "OM.channel", "OM.vchannel"];
+	const keysToBeStoredForActjs = ["OM.voss","OM.vcname","OM.vcmedium","OM.vcsource","OM.vpv","OM.lpvs","OM.lpp","OM.vq","OM.vrDomain"];
 
 	if(!organizationID || !siteID || !segmentURL || !dataSource || !realTimeURL || !channel || !euroMsgApplicationKey || !euroMsgSubscriptionURL || !euroMsgRetentionURL) {
 		throw new Error("Missing parameters (Visilabs)!");
@@ -32,6 +34,7 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 	api.segmentURL = segmentURL;
 	api.dataSource = dataSource;
 	api.realTimeURL = realTimeURL;
+	api.suggestActionURL = "http://s.visilabs.net/";
 	api.channel = channel;
 	api.euroMsgApplicationKey = euroMsgApplicationKey;
 	api.euroMsgSubscriptionURL = euroMsgSubscriptionURL;
@@ -77,7 +80,183 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 		return (str === undefined ||  str === null) || str.match(/^ *$/) !== null;
 	}
 
-	api.sendRequest = function(data, callback) {
+	const getCustomTime = () => {
+		var d = new Date();
+		var date_format_str = d.getFullYear().toString() + "-" + ((d.getMonth() + 1).toString().length == 2 ? (d.getMonth() + 1).toString() : "0" + (d.getMonth() + 1).toString()) + "-" + (d.getDate().toString().length == 2 ? d.getDate().toString() : "0" + d.getDate().toString()) + " " + (d.getHours().toString().length == 2 ? d.getHours().toString() : "0" + d.getHours().toString()) + ":" + ((d.getMinutes()).toString().length == 2 ? (d.getMinutes()).toString() : "0" + (d.getMinutes()).toString()) + ":" + (d.getSeconds()).toString();
+		return date_format_str
+	}
+
+	const suggestActionsParams = {
+		set: async function (data) {
+			if (!data) return
+
+			AsyncStorage.setItem(suggestActionsKey, JSON.stringify(data));
+		},
+		get: async function () {
+			return JSON.parse(await AsyncStorage.getItem(suggestActionsKey));
+		},
+		check: async function (clientData) {
+			this.get().then((storageParams)=>{
+				let storageParameters = storageParams ? storageParams : {}
+				let clientParameters = clientData ? clientData : {}
+
+				let convertedClientParams = convertParams(clientParameters);
+
+				let lpvsArr = [];
+
+				if (storageParameters["OM.lpvs"]) 
+					lpvsArr = perseObjectLPVS(decodeURI(storageParameters["OM.lpvs"]))
+				
+
+				if (convertedClientParams["OM.vpv"]) {
+					if (checkAlreadyDefined(convertedClientParams["OM.vpv"],lpvsArr)) {
+						lpvsArr = isAlreadyDefined(convertedClientParams["OM.vpv"],lpvsArr)
+					}
+					else{
+						if (lpvsArr.length >= 10) {
+							lpvsArr.pop();
+						}
+
+						lpvsArr.unshift({
+							eventId:convertedClientParams["OM.vpv"],
+							date:getCustomTime()
+						})
+					}
+				}
+
+				let lpvs = objectArrayToString(lpvsArr)
+
+				if (lpvs) {
+					convertedClientParams["OM.lpvs"] = encodeURI(lpvs)
+				}
+			
+				let requestParams = joinObjectArrays(storageParameters, convertedClientParams);
+
+				requestParams["OM.obj"] = '_VTObjs["_VisilabsTarget_'+_VTObjsID+'"]';
+
+				const parametersToStorage = paramsToStorage(requestParams);
+
+				this.set(parametersToStorage);
+
+				
+				api.sendRequest(requestParams, (response)=>{
+					_VTObjsID++;
+				}, true);
+
+			})
+		},
+		delete: async function () {
+			AsyncStorage.removeItem(suggestActionsKey)
+		}
+	}
+	
+	function convertParams(data) {
+		let obj = {
+			"OM.voss":data["OM.OSS"] ? data["OM.OSS"] : null,
+			"OM.vcname":data["OM.cname"] ? data["OM.cname"] : null,
+			"OM.vcmedium":data["OM.cmedium"] ? data["OM.cmedium"] : null,
+			"OM.vcsource":data["OM.csource"] ? data["OM.csource"] : null,
+			"OM.vpv":data["OM.pv"] ? data["OM.pv"] : null,
+			"OM.lpp":data["OM.pp"] ? (data["OM.ppr"] ? data["OM.pp"]+"|"+data["OM.ppr"]+"|"+getCustomTime() : data["OM.pp"]) : null, // son 1 ürün
+			"OM.vq":data["OM.q"] ? data["OM.q"] : null,
+			"OM.vrDomain":data["OM.rDomain"] ? data["OM.rDomain"] : null,
+			...data
+		}
+
+		for (var prop in obj) {
+			if (!obj[prop]) 
+				delete obj[prop];
+		}
+
+		return obj
+	}
+	
+	function perseObjectLPVS(lpvs) {
+		if(!lpvs) return
+
+		let products = [], resultArr = [];
+		products = lpvs.split('~');
+		products.forEach(product => {
+			let productDetail = product.split('|');
+			resultArr.push(
+				{
+					eventId:productDetail[0],
+					date:productDetail[1]
+				}
+			)
+		});
+
+		return resultArr
+	}
+
+	function objectArrayToString(arr) {
+		if(!arr) return
+
+		let resultArr = arr.map(function(product) {
+			return product['eventId']+"|"+product['date'];
+		});
+
+		let resultString = resultArr.join('~')
+		
+		return resultString
+	}
+
+	function checkAlreadyDefined(id,arr) {
+		let result=false;
+
+		arr.forEach(product => {
+			if (product.eventId == id) {
+				result = true
+			}
+		});
+
+		return result
+	}
+
+	function isAlreadyDefined(id,arr) {
+		let alreadyDefinedProduct;
+
+		arr.forEach(product => {
+			if (product.eventId == id) {
+				alreadyDefinedProduct = product;
+				const index = arr.indexOf(product);
+				if (index > -1) {
+					arr.splice(index, 1);
+				}
+			}
+		});
+
+		if (alreadyDefinedProduct) {
+			alreadyDefinedProduct.date = getCustomTime();
+			arr.unshift(alreadyDefinedProduct)
+		}
+		
+		return arr
+	}
+
+	function paramsToStorage(params) {
+		let resutlArr = {}
+
+		for (let i = 0; i < keysToBeStoredForActjs.length-1; i++) {
+			if (params[keysToBeStoredForActjs[i]] != undefined) {
+				resutlArr[keysToBeStoredForActjs[i]] = params[keysToBeStoredForActjs[i]]
+			}
+		}
+		
+		return resutlArr
+	}
+
+	function joinObjectArrays(obj1,obj2) {
+		if (!obj1 || !obj1) return 
+
+		var obj3 = {};
+		for (var attrname in obj1) { obj3[attrname] = obj1[attrname]; }
+		for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
+
+		return obj3;
+	}
+
+	api.sendRequest = function(data, callback, targetAction = false) {
 		callback = callback || function() {};
 		data["OM.vchannel"] = api.channel;
 		var valuesToSet = [];
@@ -104,11 +283,17 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 						data["OM.cookieID"] = setCookieID();
 					}
 
-					var lgrUrl = api.segmentURL + "/" + api.dataSource + "/om.gif?" + querystring.stringify(data);
-					var rtUrl = api.realTimeURL + "/" + api.dataSource + "/om.gif?" + querystring.stringify(data);
+					if (targetAction) {
+						var sUrl = api.suggestActionURL + "act.js?" + querystring.stringify(data);
 
-					send(lgrUrl, "GET", null, callback);
-					send(rtUrl, "GET", null, callback);
+						send(sUrl, "GET", null, callback);
+					}else{
+						var lgrUrl = api.segmentURL + "/" + api.dataSource + "/om.gif?" + querystring.stringify(data);
+						var rtUrl = api.realTimeURL + "/" + api.dataSource + "/om.gif?" + querystring.stringify(data);
+					
+						send(lgrUrl, "GET", null, callback);
+						send(rtUrl, "GET", null, callback);
+					}
 				});
 
 			});
@@ -122,6 +307,7 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 			properties = {};
 		}
 		properties["OM.uri"] = pageName;
+		suggestActionsParams.check(properties);
 		api.sendRequest(properties, callback);
 	};
 
@@ -317,8 +503,3 @@ var create_api = function(organizationID, siteID, segmentURL, dataSource, realTi
 module.exports = {
 	create_api: create_api
 };
-
-
-
-
-
