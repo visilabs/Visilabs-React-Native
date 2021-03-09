@@ -30,7 +30,6 @@ export default class Story extends Component {
         this.api = this.props.api;
         this.api.suggestActionsParams.check(properties, true, (data) => {
             data.json().then((actions) => {
-                console.log("actions",actions);
                 if (!actions.Story[0]) return
                 
                 this.story = actions.Story[0].actiondata
