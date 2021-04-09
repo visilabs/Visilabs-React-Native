@@ -15,7 +15,7 @@ function checkStatus(response) {
 
 var create_api = function(organizationID, siteID, segmentURL, dataSource, realTimeURL, channel, euroMsgApplicationKey, euroMsgSubscriptionURL, euroMsgRetentionURL, local) {
 
-	const sdkVersion = "1.0.33";
+	const sdkVersion = "1.0.34";
 	const euroSubscriptionKey = "subscription";
 	const suggestActionsKey = 'suggestActionsParams';
 

@@ -53,6 +53,7 @@ export default class Story extends Component {
             this.storyStyle.labelColor = styles.storylb_label_color || false;
             this.storyStyle.borderWidth = styles.storylb_img_borderWidth || false;
             this.storyStyle.shadow = styles.storylb_img_boxShadow ? true : false;
+            this.storyStyle.moveShownToEnd = styles.moveShownToEnd === "false" ? false : true;
 
             let data = [];
             stories.forEach((s,i) => {
@@ -64,16 +65,16 @@ export default class Story extends Component {
                     seen: false
                 })
             });
-            this.seenStories(data)
+            this.seenStories(data,this.storyStyle.moveShownToEnd)
         }
     }
 
-    seenStories(rawData) {
+    seenStories(rawData,moveShownToEnd) {
         returnSeenStories(rawData,(res)=>{
             this.setState({ data: res},()=>{
                 this.setState({ready:true})
             })
-        },this.actid)
+        },this.actid,moveShownToEnd)
     }
 
     callback(key) {

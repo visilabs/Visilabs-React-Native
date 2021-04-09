@@ -12,11 +12,10 @@ export const dots = (str, len) => {
 export const seen = (index) => {
     getSeenList().then(val => {
         let arr = (NUSC(val) ? [] : val.split(","));
-
-        arr.indexOf(index) < 0 && (
-            arr.push(index),
-            setSeenList(arr)
-        )
+        if (arr.indexOf(index) < 0) {
+            arr.push(index);
+            setSeenList(arr);
+        }
     })
 }
 
@@ -30,26 +29,35 @@ export const setSeenList = (arr) => {
     AsyncStorage.setItem(key, arr.toString());
 }
 
-export const returnSeenStories = (obj,callback,actid) => {
+export const returnSeenStories = (obj,callback,actid,moveShownToEnd) => {
     if (!obj) var obj = {}
 
     getSeenList().then(keys => {
+
         if (NUSC(keys)) {
             callback(obj)
             return
         }
 
-        keys.split(",")
-        obj.forEach((story,i) => {
-            if (keys.indexOf(returnId(actid,story.title)) >= 0) {
-                story.seen = true
-                // let tmp = story;
-                obj.splice(i, 1);
-                obj.push(story)
-            }
+        let seenKeys = keys.split(","), seenList = [], notSeenList = []
 
-            if (i+1 >= obj.length) callback(obj)
+        obj.forEach((story,i) => {
+            if (seenKeys.indexOf(returnId(actid,story.title)) >= 0) {
+                story.seen = true
+
+                seenList = obj.filter((item)=>{
+                    return item.seen == true
+                });
+
+                notSeenList = obj.filter((item)=>{
+                    return item.seen == false
+                });
+            }
             
+            if (i+1 >= obj.length) {
+                if (moveShownToEnd) callback([...notSeenList,...seenList])
+                else callback(obj)
+            }
         });
     })
 }
